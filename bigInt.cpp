@@ -133,10 +133,26 @@ std::istream &operator>>(std::istream &is, int128& value){
     return is;
 }
 
+int128 operator+(const int128 &a, const int128 &b){
+    int128 res;
+    res.low = a.low + b.low;
+    res.high = a.high + b.high + (res.low < a.low ? 1 : 0);
+    return res;
+}
+
+int128 operator-(const int128 &a, const int128 &b){
+    int128 res;
+    res.low = a.low + -b.low;
+    res.high = a.high + -b.high - (b.low > a.low ? 1 : 0);
+    return res;
+}
+
 int main(){
     int128 a="12345678912345678901234567899"_i;
-    int128 b=987654321098765432LL;
-    std::cin>>b;
-    std::cout<<a<<'\n'<<b<<'\n';
+    int128 b=987654321098765432LL , c;
+    std::cin>>b>>c;
+    std::cout<<a<<'\n';
+    std::cout<<b<<' '<<c<<std::endl;
+    std::cout<<(b+c)<<' '<<(a-b)<<std::endl;
     return 0;
 }
