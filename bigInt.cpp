@@ -153,6 +153,6 @@ int main(){
     std::cin>>b>>c;
     std::cout<<a<<'\n';
     std::cout<<b<<' '<<c<<std::endl;
-    std::cout<<(b+c)<<' '<<(a-b)<<std::endl;
+    std::cout<<(b+c)<<' '<<(b-c)<<std::endl;
     return 0;
 }
