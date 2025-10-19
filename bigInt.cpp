@@ -13,13 +13,9 @@ struct int128{
     unsigned long long low;
 
     int128(): high(0), low(0) {}
-    // sign-extend high for signed 64-bit input
-    int128(long long value): high(value < 0 ? -1 : 0), low(static_cast<unsigned long long>(value)) {}
     int128(unsigned long long value): high(0), low(value) {}
 
-    // multiply (hi,lo) by 10 and add digit d (0..9), portable (no __int128)
     static void mul10_add(unsigned long long &hi, unsigned long long &lo, unsigned int d){
-        // lo * 10 = lo*8 + lo*2
         unsigned long long lo8 = lo << 3;
         unsigned long long lo2 = lo << 1;
         unsigned long long carry = (lo >> 61) + (lo >> 63);
@@ -32,7 +28,6 @@ struct int128{
         lo = new_lo;
     }
 
-    // decimal string constructor (portable)
     int128(const std::string& s){
         if(s.size() > 40) throw std::out_of_range("String too long for int128");
         if(s.empty()){ high = 0; low = 0; return; }
@@ -58,7 +53,6 @@ struct int128{
             low = lo;
         }else{
             if(hi > NEG_HI_LIMIT || (hi == NEG_HI_LIMIT && lo != 0)) throw std::out_of_range("Value too large (negative) for int128");
-            // two's complement negate (hi,lo)
             lo = ~lo;
             lo = lo + 1;
             unsigned long long carry2 = (lo == 0) ? 1ULL : 0ULL;
@@ -69,9 +63,7 @@ struct int128{
         }
     }
 
-    // produce full decimal string (portable, no __int128)
     std::string toString() const {
-        // get unsigned magnitude
         uint64_t hi = static_cast<uint64_t>(high);
         uint64_t lo = low;
         bool negative = (high < 0);
@@ -85,7 +77,6 @@ struct int128{
 
         if(hi == 0 && lo == 0) return std::string(negative ? "-0" : "0");
 
-        // divide unsigned 128 by 10 repeatedly
         auto divmod_u128_by_10 = [](uint64_t hi_in, uint64_t lo_in, uint64_t &qh, uint64_t &ql)->uint32_t{
             qh = 0; ql = 0;
             uint32_t rem = 0;
@@ -115,36 +106,82 @@ struct int128{
         std::reverse(digits.begin(), digits.end());
         return std::string(digits.begin(), digits.end());
     }
+
+    int128& operator++(){
+        int128 old = *this;
+        ++(*this);
+        return old;
+    }
+
+    int128 operator++(int){
+        int128 old = *this;
+        ++(*this);
+        return old;
+    }
+
+    int128& operator--(){
+        int128 old = *this;
+        --(*this);
+        return old;
+    }
+
+    int128 operator--(int){
+        int128 old = *this;
+        --(*this);
+        return old;
+    }
+
+    int128 operator+(const int128 &a){
+        int128 res = *this;
+        res.low += a.low;
+        res.high = a.high + res.high + (res.low < a.low ? 1 : 0);
+        return res;
+    }
+
+    int128 operator-(const int128 &a){
+        int128 res = *this;
+        res.low -= a.low;
+        res.high = res.high - a.high - (res.low > ~a.low ? 1 : 0);
+        return res;
+    }
+
+    bool operator >(const int128 &a){
+        int128 b = *this;
+        if(b.high != a.high) return b.high > a.high;
+        return b.low > a.low;
+    }
+
+    bool operator <(const int128 &a){
+        int128 b = *this;
+        if(a.high != b.high) return a.high < b.high;
+        return a.low < b.low;
+    }
+
+    int128 operator*(const int128 &a){
+        int128 b = *this;
+        int128 res=a;
+        for(int128 i=1;i<b;i++){
+            res=res+a;
+        }
+        return res;
+    }
+
 };
 
-int128 operator"" _i(const char* s, std::size_t len){
-    return int128(std::string(s, len));
+int128 operator"" _i( const char* str, std::size_t /*len*/ ){
+    return int128(std::string(str));
 }
 
-std::ostream &operator<<(std::ostream &os, const int128 & value){
-    os << value.toString();
-    return os;
+std::ostream &operator<<( std::ostream &os, const int128 &value ){
+    os<<value.toString();
+    return std::cout;
 }
 
-std::istream &operator>>(std::istream &is, int128& value){
+std::istream &operator>>(std::istream &is , int128 &value ){
     std::string s;
     is>>s;
-    value = int128(s);
+    value=int128(s);
     return is;
-}
-
-int128 operator+(const int128 &a, const int128 &b){
-    int128 res;
-    res.low = a.low + b.low;
-    res.high = a.high + b.high + (res.low < a.low ? 1 : 0);
-    return res;
-}
-
-int128 operator-(const int128 &a, const int128 &b){
-    int128 res;
-    res.low = a.low + -b.low;
-    res.high = a.high + -b.high - (b.low > a.low ? 1 : 0);
-    return res;
 }
 
 int main(){
