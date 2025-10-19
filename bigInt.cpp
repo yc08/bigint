@@ -115,6 +115,11 @@ int main(){
     c.print();
     std::cout << "a - b: ";
     d.print();
-
+    std::cout << "a * b: ";
+    Bigint e = a * b; // should be 90 (1011010)
+    e.print();
+    std::cout << "a / b: ";
+    Bigint f = a / b; // should be 0 (0)
+    f.print();
     return 0;
 }
