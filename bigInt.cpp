@@ -4,17 +4,18 @@
 #include<algorithm>
 #include<vector>
 
+template<size_t N>
 struct Bigint{
-    std::bitset<128> bits;
+    std::bitset<N> bits;
 
     Bigint(){
         bits.reset();
     }
     Bigint(long long value){
-        bits = std::bitset<128>(value);
+        bits = std::bitset<N>(value);
     }
     Bigint(int value){
-        bits = std::bitset<128>(value);
+        bits = std::bitset<N>(value);
     }
     Bigint(const std::string &value){
         bits.reset();
@@ -34,6 +35,10 @@ struct Bigint{
         }
     }
 
+    bool isNegative() const {
+        return bits[N-1];
+    }
+
     Bigint operator ~ () const {
         Bigint result;
         result.bits = ~bits;
@@ -50,9 +55,11 @@ struct Bigint{
     }
 
     bool operator>( const Bigint &other) const {
-        for (int i = bits.size() - 1; i >= 0; --i) {
+        if(isNegative() && !other.isNegative()) return false;
+        if(!isNegative() && other.isNegative()) return true;
+        for (int i = N - 1; i >= 0; --i) {
             if (bits[i] != other.bits[i]) {
-                return bits[i];
+                return bits[i] > other.bits[i];
             }
         }
         return false;
@@ -69,11 +76,45 @@ struct Bigint{
     bool operator<=( const Bigint &other) const {
         return !(*this > other);
     }
+
+    Bigint operator<<(const size_t &shift) const {
+        Bigint result;
+        result.bits = bits << shift;
+        return result;
+    }
+
+    Bigint operator>>(const size_t &shift) const {
+        Bigint result;
+        result.bits = bits >> shift;
+        return result;
+    }
     
+    Bigint& operator++() {
+        *this = *this + Bigint(1);
+        return *this;
+    }
+
+    Bigint operator++(int) {
+        Bigint tmp = *this;
+        ++(*this);
+        return tmp;
+    }
+
+    Bigint operator--() {
+        *this = *this - Bigint(1);
+        return *this;
+    }
+
+    Bigint operator--(int) {
+        Bigint tmp = *this;
+        --(*this);
+        return tmp;
+    }
+
     Bigint operator+(const Bigint &other) const {
         Bigint result;
         bool carry = false;
-        for (size_t i = 0; i < bits.size(); ++i) {
+        for (size_t i = 0; i < N; ++i) {
             bool bit1 = bits[i];
             bool bit2 = other.bits[i];
             result.bits[i] = bit1 ^ bit2 ^ carry;
@@ -104,66 +145,96 @@ struct Bigint{
         return *this + negOther;
     }
 
+    Bigint operator-(const long long &other) const {
+        Bigint negOther = ~other;
+        Bigint one;
+        one.bits[0] = 1;
+        negOther = negOther + one;
+        return *this + negOther;
+    }
+
+    Bigint operator-(const int &other) const {
+        Bigint negOther = ~other;
+        Bigint one;
+        one.bits[0] = 1;
+        negOther = negOther + one;
+        return *this + negOther;
+    }
+
     Bigint operator*(const Bigint &other) const {
         Bigint result;
-        for (size_t i = 0; i < bits.size(); ++i) {
-            if (other.bits[i]) {
-                Bigint temp = *this;
-                temp.bits <<= i;
-                result = result + temp;
+        Bigint multiplicand = *this;
+        Bigint multiplier = other;
+
+        for (size_t i = 0; i < N; ++i) {
+            if (multiplier.bits[i]) {
+                result = result + (multiplicand << i);
             }
         }
         return result;
     }
 
     Bigint operator/(const Bigint &other) const {
+        bool neg = isNegative() ^ other.isNegative();
+        Bigint dividend = abs();
+        Bigint divisor = other.abs();
+
         Bigint quotient, remainder;
-        for (int i = bits.size() - 1; i >= 0; --i) {
+        for (int i = N - 1; i >= 0; --i) {
             remainder.bits <<= 1;
-            remainder.bits[0] = bits[i];
-            if (remainder >= other) {
-                remainder = remainder - other;
+            remainder.bits[0] = dividend.bits[i];
+            if (remainder >= divisor) {
+                remainder = remainder - divisor;
                 quotient.bits[i] = 1;
             }
+        }
+        if (neg) {
+            quotient = ~quotient + Bigint(1);
         }
         return quotient;
     }
 
+
     void print() const {
-        for (int i = bits.size() - 1; i >= 0; --i) {
+        for (int i = N - 1; i >= 0; --i) {
             std::cout << bits[i];
         }
         std::cout << std::endl;
     }
 
     Bigint abs() const {
-        if (!bits[bits.size()-1]) return *this;
+        if (!bits[N-1]) return *this;
         Bigint inv = ~(*this);
         Bigint one;
         one.bits[0] = 1;
         return inv + one; 
     }
 
-    std::string num() {
-        Bigint num = *this;
-        Bigint zero(0);
-        Bigint ten(10);
-        Bigint n = num.abs();
+    std::string num() const {
+        Bigint<N> zero(0);
+        Bigint<N> ten(10);
+        Bigint<N> n = abs();
         std::string result;
-        if (n == zero) return "0";
+
         while (n > zero) {
-            Bigint remainder;
-            Bigint quotient;
-            remainder = n;
+            Bigint<N> quotient, remainder;
             quotient = n / ten;
             remainder = n - (quotient * ten);
-            char digit = '0' + static_cast<char>(remainder.bits.to_ullong());
-            result.push_back(digit);
+
+            unsigned digit = 0;
+            for (size_t i = 0; i < N; ++i)
+                if (remainder.bits[i]) digit += (1ULL << i);
+
+            result.push_back('0' + digit);
             n = quotient;
         }
-        if (num.bits[num.bits.size()-1]) {
+
+        if (result.empty())
+            result = "0";
+
+        if (isNegative())
             result.push_back('-');
-        }
+
         std::reverse(result.begin(), result.end());
         return result;
     }
@@ -171,24 +242,24 @@ struct Bigint{
 };
 
 int main(){
-    Bigint a, b, c, d;
-    a.bits[0] = 1; // 1
-    a.bits[3] = 1; // 8
-    b.bits[1] = 1; // 2
-    b.bits[3] = 1; // 8
-
-    c = a + b; // should be 10 (1010)
-    d = a - b; // should be -6 (in two's complement)
-    std::cout << "a : "<< a.num() << std::endl;
-    std::cout << "b : "<< b.num() << std::endl;
-    std::cout << "a + b: "<< c.num() << std::endl;
-    std::cout << "a - b: "<< d.num() << std::endl;
-    Bigint e = Bigint("123456787654323456776543");
-    std::cout << "e : "<< e.num() << std::endl;
-    Bigint f;
+    Bigint<128>a,b;
     std::string s;
     std::cin>>s;
-    f = Bigint(s);
-    std::cout<<"f : "<<f.num()<<std::endl;
+    a=Bigint<128>(s);
+    char op;
+    std::cin>>op;
+    std::cin>>s;
+    b=Bigint<128>(s);
+    if(op=='+'){
+        std::cout<<(a+b).num()<<std::endl;
+    }else if(op=='-'){
+        std::cout<<(a-b).num()<<std::endl;
+    }else if(op=='*'){
+        std::cout<<(a*b).num()<<std::endl;
+    }else if(op=='/'){
+        std::cout<<(a/b).num()<<std::endl;
+    }
+    
+
     return 0;
 }
