@@ -107,6 +107,8 @@ struct int128{
         return std::string(digits.begin(), digits.end());
     }
 
+    // ++a, a++, --a, a--, a + b, a-b
+
     int128& operator++(){
         int128 old = *this;
         ++(*this);
@@ -138,12 +140,17 @@ struct int128{
         return res;
     }
 
-    int128 operator-(const int128 &a){
+    int128 operator-(int128 &a){
         int128 res = *this;
-        res.low -= a.low;
-        res.high = res.high - a.high - (res.low > ~a.low ? 1 : 0);
+        a.high = ~a.high;
+        a.low = ~a.low;
+        a.low = a.low + 1;
+        unsigned long long carry = (a.low == 0) ? 1ULL : 0ULL;
+        res.low = res.low + a.low;
         return res;
     }
+
+    // a > b, a < b, a >= b, a <= b
 
     bool operator >(const int128 &a){
         int128 b = *this;
@@ -157,7 +164,21 @@ struct int128{
         return a.low < b.low;
     }
 
-    int128 operator*(const int128 &a){
+    bool operator >=(const int128 &a){
+        int128 b = *this;
+        if(b.high != a.high) return b.high >= a.high;
+        return b.low >= a.low;
+    }
+
+    bool operator <=(const int128 &a){
+        int128 b = *this;
+        if(a.high != b.high) return a.high <= b.high;
+        return a.low <= b.low;
+    }
+
+    // a * b, a / b
+
+    int128 operator*(int128 &a){
         int128 b = *this;
         int128 res=a;
         for(int128 i=1;i<b;i++){
@@ -166,7 +187,21 @@ struct int128{
         return res;
     }
 
+    int128 operator/(int128 &a){
+        int128 b = *this;
+        if(a.high==0 && a.low==0) throw std::invalid_argument("Division by zero");
+        int128 res=0;
+        int128 one=1;
+        while(b>=a){
+            b= b - a;
+            res=res + one;
+        }
+        return res;
+    }
+
 };
+
+//  io
 
 int128 operator"" _i( const char* str, std::size_t /*len*/ ){
     return int128(std::string(str));
