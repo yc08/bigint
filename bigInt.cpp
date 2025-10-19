@@ -1,230 +1,265 @@
-#include <iostream>
-#include <string>
-#include <climits>
-#include <stdexcept>
-#include <cctype>
-#include <cstddef>
-#include <cstdint>
-#include <vector>
-#include <algorithm>
+#include<iostream>
+#include<bitset>
+#include<string>
+#include<algorithm>
+#include<vector>
 
-struct int128{
-    long long high;
-    unsigned long long low;
+template<size_t N>
+struct Bigint{
+    std::bitset<N> bits;
 
-    int128(): high(0), low(0) {}
-    int128(unsigned long long value): high(0), low(value) {}
-
-    static void mul10_add(unsigned long long &hi, unsigned long long &lo, unsigned int d){
-        unsigned long long lo8 = lo << 3;
-        unsigned long long lo2 = lo << 1;
-        unsigned long long carry = (lo >> 61) + (lo >> 63);
-        unsigned long long lo_mul = lo8 + lo2;
-        if(lo_mul < lo8) ++carry;
-        unsigned long long new_lo = lo_mul + d;
-        if(new_lo < lo_mul) ++carry;
-        if(hi > (ULLONG_MAX - carry) / 10) throw std::out_of_range("Value too large for int128");
-        hi = hi * 10 + carry;
-        lo = new_lo;
+    Bigint(){
+        bits.reset();
     }
-
-    int128(const std::string& s){
-        if(s.size() > 40) throw std::out_of_range("String too long for int128");
-        if(s.empty()){ high = 0; low = 0; return; }
-        bool neg = s[0] == '-';
-        size_t i = neg ? 1 : 0;
-
-        unsigned long long hi = 0;
-        unsigned long long lo = 0;
-
-        for(; i < s.size(); ++i){
-            unsigned char ch = static_cast<unsigned char>(s[i]);
-            if(ch < '0' || ch > '9') throw std::invalid_argument("Invalid character in string");
-            unsigned int d = ch - '0';
-            mul10_add(hi, lo, d);
+    Bigint(long long value){
+        bits = std::bitset<N>(value);
+    }
+    Bigint(int value){
+        bits = std::bitset<N>(value);
+    }
+    Bigint(const std::string &value){
+        bits.reset();
+        Bigint ten(10);
+        bool isNegative = value[0] == '-';
+        for (size_t i = 0; i < value.size(); ++i) {
+            char digit = value[i];
+            if (digit < '0' || digit > '9') continue;
+            Bigint temp = (*this) * ten;
+            Bigint digitBigint(digit - '0');
+            *this = temp + digitBigint;
         }
-
-        const unsigned long long POS_HI_MAX = static_cast<unsigned long long>(LLONG_MAX); // 2^63-1
-        const unsigned long long NEG_HI_LIMIT = (1ULL << 63); // 2^63
-
-        if(!neg){
-            if(hi > POS_HI_MAX) throw std::out_of_range("Value too large for positive int128");
-            high = static_cast<long long>(hi);
-            low = lo;
-        }else{
-            if(hi > NEG_HI_LIMIT || (hi == NEG_HI_LIMIT && lo != 0)) throw std::out_of_range("Value too large (negative) for int128");
-            lo = ~lo;
-            lo = lo + 1;
-            unsigned long long carry2 = (lo == 0) ? 1ULL : 0ULL;
-            hi = ~hi;
-            hi = hi + carry2;
-            high = static_cast<long long>(hi);
-            low = lo;
+        if (isNegative) {
+            *this = ~(*this);
+            Bigint one(1);
+            *this = *this + one;
         }
     }
 
-    std::string toString() const {
-        uint64_t hi = static_cast<uint64_t>(high);
-        uint64_t lo = low;
-        bool negative = (high < 0);
+    bool isNegative() const {
+        return bits[N-1];
+    }
 
-        if(negative){
-            hi = ~hi;
-            lo = ~lo;
-            ++lo;
-            if(lo == 0) ++hi;
-        }
+    Bigint operator ~ () const {
+        Bigint result;
+        result.bits = ~bits;
+        return result;
+    }
 
-        if(hi == 0 && lo == 0) return std::string(negative ? "-0" : "0");
+    Bigint operator = (const Bigint &other) {
+        bits = other.bits;
+        return *this;
+    }
 
-        auto divmod_u128_by_10 = [](uint64_t hi_in, uint64_t lo_in, uint64_t &qh, uint64_t &ql)->uint32_t{
-            qh = 0; ql = 0;
-            uint32_t rem = 0;
-            for(int pos = 127; pos >= 0; --pos){
-                unsigned int bit;
-                if(pos >= 64) bit = (hi_in >> (pos - 64)) & 1U;
-                else bit = (lo_in >> pos) & 1U;
-                rem = (rem << 1) | bit;
-                if(rem >= 10){
-                    rem -= 10;
-                    if(pos >= 64) qh |= (1ULL << (pos - 64));
-                    else ql |= (1ULL << pos);
-                }
+    bool operator==( const Bigint &other) const {
+        return bits == other.bits;
+    }
+
+    bool operator>( const Bigint &other) const {
+        if(isNegative() && !other.isNegative()) return false;
+        if(!isNegative() && other.isNegative()) return true;
+        for (int i = N - 1; i >= 0; --i) {
+            if (bits[i] != other.bits[i]) {
+                return bits[i] > other.bits[i];
             }
-            return rem;
-        };
-
-        std::vector<char> digits;
-        while(hi != 0 || lo != 0){
-            uint64_t qh=0, ql=0;
-            uint32_t rem = divmod_u128_by_10(hi, lo, qh, ql);
-            digits.push_back(char('0' + rem));
-            hi = qh; lo = ql;
         }
-
-        if(negative) digits.push_back('-');
-        std::reverse(digits.begin(), digits.end());
-        return std::string(digits.begin(), digits.end());
+        return false;
     }
 
-    // ++a, a++, --a, a--, a + b, a-b
+    bool operator>=( const Bigint &other) const {
+        return (*this > other) || (*this == other);
+    }
 
-    int128& operator++(){
-        int128 old = *this;
+    bool operator<( const Bigint &other) const {
+        return !(*this >= other);
+    }
+
+    bool operator<=( const Bigint &other) const {
+        return !(*this > other);
+    }
+
+    Bigint operator<<(const size_t &shift) const {
+        Bigint result;
+        result.bits = bits << shift;
+        return result;
+    }
+
+    Bigint operator>>(const size_t &shift) const {
+        Bigint result;
+        result.bits = bits >> shift;
+        return result;
+    }
+    
+    Bigint& operator++() {
+        *this = *this + Bigint(1);
+        return *this;
+    }
+
+    Bigint operator++(int) {
+        Bigint tmp = *this;
         ++(*this);
-        return old;
+        return tmp;
     }
 
-    int128 operator++(int){
-        int128 old = *this;
-        ++(*this);
-        return old;
+    Bigint operator--() {
+        *this = *this - Bigint(1);
+        return *this;
     }
 
-    int128& operator--(){
-        int128 old = *this;
+    Bigint operator--(int) {
+        Bigint tmp = *this;
         --(*this);
-        return old;
+        return tmp;
     }
 
-    int128 operator--(int){
-        int128 old = *this;
-        --(*this);
-        return old;
-    }
-
-    int128 operator+(const int128 &a){
-        int128 res = *this;
-        res.low += a.low;
-        res.high = a.high + res.high + (res.low < a.low ? 1 : 0);
-        return res;
-    }
-
-    int128 operator-(int128 &a){
-        int128 res = *this;
-        a.high = ~a.high;
-        a.low = ~a.low;
-        a.low = a.low + 1;
-        unsigned long long carry = (a.low == 0) ? 1ULL : 0ULL;
-        res.low = res.low + a.low;
-        return res;
-    }
-
-    // a > b, a < b, a >= b, a <= b
-
-    bool operator >(const int128 &a){
-        int128 b = *this;
-        if(b.high != a.high) return b.high > a.high;
-        return b.low > a.low;
-    }
-
-    bool operator <(const int128 &a){
-        int128 b = *this;
-        if(a.high != b.high) return a.high < b.high;
-        return a.low < b.low;
-    }
-
-    bool operator >=(const int128 &a){
-        int128 b = *this;
-        if(b.high != a.high) return b.high >= a.high;
-        return b.low >= a.low;
-    }
-
-    bool operator <=(const int128 &a){
-        int128 b = *this;
-        if(a.high != b.high) return a.high <= b.high;
-        return a.low <= b.low;
-    }
-
-    // a * b, a / b
-
-    int128 operator*(int128 &a){
-        int128 b = *this;
-        int128 res=a;
-        for(int128 i=1;i<b;i++){
-            res=res+a;
+    Bigint operator+(const Bigint &other) const {
+        Bigint result;
+        bool carry = false;
+        for (size_t i = 0; i < N; ++i) {
+            bool bit1 = bits[i];
+            bool bit2 = other.bits[i];
+            result.bits[i] = bit1 ^ bit2 ^ carry;
+            carry = (bit1 && bit2) || (carry && (bit1 ^ bit2));
         }
-        return res;
+        return result;
     }
 
-    int128 operator/(int128 &a){
-        int128 b = *this;
-        if(a.high==0 && a.low==0) throw std::invalid_argument("Division by zero");
-        int128 res=0;
-        int128 one=1;
-        while(b>=a){
-            b= b - a;
-            res=res + one;
+    Bigint operator+(const long long &other) const {
+        Bigint result;
+        Bigint otherBigint(other);
+        result = *this + otherBigint;
+        return result;
+    }
+
+    Bigint operator+(const int &other) const {
+        Bigint result;
+        Bigint otherBigint(other);
+        result = *this + otherBigint;
+        return result;
+    }
+
+    Bigint operator-(const Bigint &other) const {
+        Bigint negOther = ~other;
+        Bigint one;
+        one.bits[0] = 1;
+        negOther = negOther + one;
+        return *this + negOther;
+    }
+
+    Bigint operator-(const long long &other) const {
+        Bigint negOther = ~other;
+        Bigint one;
+        one.bits[0] = 1;
+        negOther = negOther + one;
+        return *this + negOther;
+    }
+
+    Bigint operator-(const int &other) const {
+        Bigint negOther = ~other;
+        Bigint one;
+        one.bits[0] = 1;
+        negOther = negOther + one;
+        return *this + negOther;
+    }
+
+    Bigint operator*(const Bigint &other) const {
+        Bigint result;
+        Bigint multiplicand = *this;
+        Bigint multiplier = other;
+
+        for (size_t i = 0; i < N; ++i) {
+            if (multiplier.bits[i]) {
+                result = result + (multiplicand << i);
+            }
         }
-        return res;
+        return result;
+    }
+
+    Bigint operator/(const Bigint &other) const {
+        bool neg = isNegative() ^ other.isNegative();
+        Bigint dividend = abs();
+        Bigint divisor = other.abs();
+
+        Bigint quotient, remainder;
+        for (int i = N - 1; i >= 0; --i) {
+            remainder.bits <<= 1;
+            remainder.bits[0] = dividend.bits[i];
+            if (remainder >= divisor) {
+                remainder = remainder - divisor;
+                quotient.bits[i] = 1;
+            }
+        }
+        if (neg) {
+            quotient = ~quotient + Bigint(1);
+        }
+        return quotient;
+    }
+
+
+    void print() const {
+        for (int i = N - 1; i >= 0; --i) {
+            std::cout << bits[i];
+        }
+        std::cout << std::endl;
+    }
+
+    Bigint abs() const {
+        if (!bits[N-1]) return *this;
+        Bigint inv = ~(*this);
+        Bigint one;
+        one.bits[0] = 1;
+        return inv + one; 
+    }
+
+    std::string num() const {
+        Bigint<N> zero(0);
+        Bigint<N> ten(10);
+        Bigint<N> n = abs();
+        std::string result;
+
+        while (n > zero) {
+            Bigint<N> quotient, remainder;
+            quotient = n / ten;
+            remainder = n - (quotient * ten);
+
+            unsigned digit = 0;
+            for (size_t i = 0; i < N; ++i)
+                if (remainder.bits[i]) digit += (1ULL << i);
+
+            result.push_back('0' + digit);
+            n = quotient;
+        }
+
+        if (result.empty())
+            result = "0";
+
+        if (isNegative())
+            result.push_back('-');
+
+        std::reverse(result.begin(), result.end());
+        return result;
     }
 
 };
 
-//  io
-
-int128 operator"" _i( const char* str, std::size_t /*len*/ ){
-    return int128(std::string(str));
-}
-
-std::ostream &operator<<( std::ostream &os, const int128 &value ){
-    os<<value.toString();
-    return std::cout;
-}
-
-std::istream &operator>>(std::istream &is , int128 &value ){
-    std::string s;
-    is>>s;
-    value=int128(s);
-    return is;
-}
-
 int main(){
-    int128 a="12345678912345678901234567899"_i;
-    int128 b=987654321098765432LL , c;
-    std::cin>>b>>c;
-    std::cout<<a<<'\n';
-    std::cout<<b<<' '<<c<<std::endl;
-    std::cout<<(b+c)<<' '<<(b-c)<<std::endl;
+    Bigint<128>a,b;
+    std::string s;
+    std::cin>>s;
+    a=Bigint<128>(s);
+    char op;
+    std::cin>>op;
+    std::cin>>s;
+    b=Bigint<128>(s);
+    if(op=='+'){
+        std::cout<<(a+b).num()<<std::endl;
+    }else if(op=='-'){
+        std::cout<<(a-b).num()<<std::endl;
+    }else if(op=='*'){
+        std::cout<<(a*b).num()<<std::endl;
+    }else if(op=='/'){
+        std::cout<<(a/b).num()<<std::endl;
+    }
+    
+
     return 0;
 }
