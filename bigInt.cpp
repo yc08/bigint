@@ -1,8 +1,6 @@
 #include<iostream>
 #include<bitset>
-#include<string>
 #include<algorithm>
-#include<vector>
 
 template<size_t N>
 struct Bigint{
