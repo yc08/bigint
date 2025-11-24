@@ -319,16 +319,7 @@ Bigint<(A > B ? A : B)> operator+(const Bigint<A>& lhs, const Bigint<B>& rhs) {
     for (size_t i = 0; i < A; ++i) a.bits[i] = lhs.bits[i];
     for (size_t i = 0; i < B; ++i) b.bits[i] = rhs.bits[i];
 
-    Bigint<R> result;
-    bool carry = false;
-    for (size_t i = 0; i < R; ++i) {
-        bool bit1 = a.bits[i];
-        bool bit2 = b.bits[i];
-        bool sum = bit1 ^ bit2 ^ carry;
-        carry = (bit1 && bit2) || (carry && (bit1 ^ bit2));
-        result.bits[i] = sum;
-    }
-    return result;
+    return a + b;
 }
 template<size_t A, size_t B>
 Bigint<(A > B ? A : B)> operator-(const Bigint<A>& lhs, const Bigint<B>& rhs) {
@@ -337,8 +328,8 @@ Bigint<(A > B ? A : B)> operator-(const Bigint<A>& lhs, const Bigint<B>& rhs) {
     Bigint<R> b;
     for (size_t i = 0; i < A; ++i) a.bits[i] = lhs.bits[i];
     for (size_t i = 0; i < B; ++i) b.bits[i] = rhs.bits[i];
-    b = ~b;
-    return a + b + 1;
+    
+    return a - b;
 }
 template<size_t A, size_t B>
 Bigint<(A > B ? A : B)> operator*(const Bigint<A>& lhs, const Bigint<B>& rhs) {
@@ -348,13 +339,7 @@ Bigint<(A > B ? A : B)> operator*(const Bigint<A>& lhs, const Bigint<B>& rhs) {
     for (size_t i = 0; i < A; ++i) a.bits[i] = lhs.bits[i];
     for (size_t i = 0; i < B; ++i) b.bits[i] = rhs.bits[i];
 
-    Bigint<R> result;
-    for (size_t i = 0; i < R; ++i) {
-        if (b.bits[i]) {
-            result = result + (a << i);
-        }
-    }
-    return result;
+    return a * b;
 }
 template<size_t A, size_t B>
 Bigint<(A > B ? A : B)> operator/(const Bigint<A>& lhs, const Bigint<B>& rhs) {
@@ -364,23 +349,7 @@ Bigint<(A > B ? A : B)> operator/(const Bigint<A>& lhs, const Bigint<B>& rhs) {
     for (size_t i = 0; i < A; ++i) dividend.bits[i] = lhs.bits[i];
     for (size_t i = 0; i < B; ++i) divisor.bits[i] = rhs.bits[i];
 
-    bool neg = dividend.isNegative() ^ divisor.isNegative();
-    dividend = dividend.abs();
-    divisor = divisor.abs();
-
-    Bigint<R> quotient, remainder;
-    for (int i = R - 1; i >= 0; --i) {
-        remainder.bits <<= 1;
-        remainder.bits[0] = dividend.bits[i];
-        if (remainder >= divisor) {
-            remainder = remainder - divisor;
-            quotient.bits[i] = 1;
-        }
-    }
-    if (neg) {
-        quotient = ~quotient + Bigint<R>(1);
-    }
-    return quotient;
+    return dividend / divisor;
 }
 
 int main(){
