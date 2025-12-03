@@ -1,3 +1,5 @@
+#ifndef BIGINT_CPP
+#define BIGINT_CPP
 #include<iostream>
 #include<bitset>
 #include<algorithm>
@@ -48,18 +50,18 @@ struct Bigint{
         return result;
     }
 
-    Bigint operator = (const Bigint &other) {
+    Bigint& operator = (const Bigint &other) {
         bits = other.bits;
         return *this;
     }
 
-    Bigint operator = (const long long &other) {
+    Bigint& operator = (const long long &other) {
         Bigint temp(other);
         bits = temp.bits;
         return *this;
     }
 
-    Bigint operator = (const int &other) {
+    Bigint& operator = (const int &other) {
         Bigint temp(other);
         bits = temp.bits;
         return *this;
@@ -183,7 +185,8 @@ struct Bigint{
     }
     
     Bigint& operator++() {
-        return *this + 1;
+        *this = *this + 1;
+        return *this;
     }
 
     Bigint operator++(int) {
@@ -247,27 +250,27 @@ struct Bigint{
         return *this + other + 1;
     }
 
-    Bigint operator-=(const Bigint &other) const {
-        Bigint negOther = ~other;
-        return *this + negOther + 1;
-    }
-
-    Bigint operator-(const long long other) const {
-        other = ~other;
-        return *this + other + 1;
-    }
-
-    Bigint operator-=(const long long &other) const {
+    Bigint& operator-=(const Bigint &other) const {
         Bigint negOther = ~Bigint(other);
         return *this + negOther + 1;
     }
 
-    Bigint operator-(const int other) const {
-        other = ~other;
-        return *this + other + 1;
+    Bigint operator-( long long other) const {
+        Bigint negOther = ~Bigint(other);
+        return *this + negOther + 1;
     }
 
-    Bigint operator-=(const int &other) const {
+    Bigint& operator-=(const long long &other) const {
+        Bigint negOther = ~Bigint(other);
+        return *this + negOther + 1;
+    }
+
+    Bigint operator-( int other) const {
+        Bigint negOther = ~Bigint(other);
+        return *this + negOther + 1;
+    }
+
+    Bigint& operator-=(const int &other) const {
         Bigint negOther = ~Bigint(other);
         return *this + negOther + 1;
     }
@@ -419,8 +422,10 @@ struct Bigint{
             quotient = n / ten;
             remainder = n - (quotient * ten);
 
+            // <-- safe digit extraction: only use bits < 64 to avoid UB
             unsigned digit = 0;
-            for (size_t i = 0; i < N; ++i)
+            size_t upto = std::min<size_t>(64, N);
+            for (size_t i = 0; i < upto; ++i)
                 if (remainder.bits[i]) digit += (1ULL << i);
 
             result.push_back('0' + digit);
@@ -604,6 +609,4 @@ Bigint<(A > B ? A : B)> operator^=(const Bigint<A>& l, const Bigint<B>& r) {
     return a;
 }
 
-int main(){
-    return 0;
-}
+#endif
