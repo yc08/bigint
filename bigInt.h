@@ -189,18 +189,18 @@ struct Bigint{
         return *this;
     }
 
-    Bigint operator++(int) {
+    Bigint& operator++(int) {
         Bigint tmp = *this;
         ++(*this);
         return tmp;
     }
 
-    Bigint operator--() {
+    Bigint& operator--() {
         *this = *this - 1;
         return *this;
     }
 
-    Bigint operator--(int) {
+    Bigint& operator--(int) {
         Bigint tmp = *this;
         --(*this);
         return tmp;
@@ -218,7 +218,7 @@ struct Bigint{
         return result;
     }
     
-    Bigint operator+=( const Bigint &other) {
+    Bigint& operator+=( const Bigint &other) {
         *this = *this + other;
         return *this;
     }
@@ -228,7 +228,7 @@ struct Bigint{
         return *this + otherBigint;
     }
 
-    Bigint operator+=( const long long &other) {
+    Bigint& operator+=( const long long &other) {
         Bigint otherBigint(other);
         *this = *this + otherBigint;
         return *this;
@@ -239,7 +239,7 @@ struct Bigint{
         return *this + otherBigint;
     }
 
-    Bigint operator+=( const int &other) {
+    Bigint& operator+=( const int &other) {
         Bigint otherBigint(other);
         *this = *this + otherBigint;
         return *this;
@@ -288,7 +288,7 @@ struct Bigint{
         return result;
     }
 
-    Bigint operator*=( const Bigint &other) {
+    Bigint& operator*=( const Bigint &other) {
         *this = *this * other;
         return *this;
     }
@@ -298,7 +298,7 @@ struct Bigint{
         return *this * otherBigint;
     }
 
-    Bigint operator*=( const long long &other) {
+    Bigint& operator*=( const long long &other) {
         Bigint otherBigint(other);
         *this = *this * otherBigint;
         return *this;
@@ -309,7 +309,7 @@ struct Bigint{
         return *this * otherBigint;
     }
 
-    Bigint operator*=( const int &other) {
+    Bigint& operator*=( const int &other) {
         Bigint otherBigint(other);
         *this = *this * otherBigint;
         return *this;
@@ -335,7 +335,7 @@ struct Bigint{
         return quotient;
     }
 
-    Bigint operator/=( const Bigint &other) {
+    Bigint& operator/=( const Bigint &other) {
         *this = *this / other;
         return *this;
     }
@@ -345,7 +345,7 @@ struct Bigint{
         return *this / otherBigint;
     }
 
-    Bigint operator/=( const long long &other) {
+    Bigint& operator/=( const long long &other) {
         Bigint otherBigint(other);
         *this = *this / otherBigint;
         return *this;
@@ -356,7 +356,7 @@ struct Bigint{
         return *this / otherBigint;
     }
 
-    Bigint operator/=( const int &other) {
+    Bigint& operator/=( const int &other) {
         Bigint otherBigint(other);
         *this = *this / otherBigint;
         return *this;
@@ -369,7 +369,7 @@ struct Bigint{
         return remainder;
     }
 
-    Bigint operator%=( const Bigint &other) {
+    Bigint& operator%=( const Bigint &other) {
         *this = *this % other;
         return *this;
     }
@@ -379,7 +379,7 @@ struct Bigint{
         return *this % otherBigint;
     }
 
-    Bigint operator%=( const long long &other) {
+    Bigint& operator%=( const long long &other) {
         Bigint otherBigint(other);
         *this = *this % otherBigint;
         return *this;
@@ -390,7 +390,7 @@ struct Bigint{
         return *this % otherBigint;
     }
 
-    Bigint operator%=( const int &other) {
+    Bigint& operator%=( const int &other) {
         Bigint otherBigint(other);
         *this = *this % otherBigint;
         return *this;
@@ -422,7 +422,6 @@ struct Bigint{
             quotient = n / ten;
             remainder = n - (quotient * ten);
 
-            // <-- safe digit extraction: only use bits < 64 to avoid UB
             unsigned digit = 0;
             size_t upto = std::min<size_t>(64, N);
             for (size_t i = 0; i < upto; ++i)
@@ -574,39 +573,6 @@ Bigint<(A > B ? A : B)> operator^(const Bigint<A>& l, const Bigint<B>& r) {
     for (size_t i = 0; i < B; ++i) b.bits[i] = r.bits[i];
 
     return a^b;
-}
-template<size_t A, size_t B>
-Bigint<(A > B ? A : B)> operator&=(const Bigint<A>& l, const Bigint<B>& r) {
-    constexpr size_t R = (A > B ? A : B);
-    Bigint<R> a;
-    Bigint<R> b;
-    for (size_t i = 0; i < A; ++i) a.bits[i] = l.bits[i];
-    for (size_t i = 0; i < B; ++i) b.bits[i] = r.bits[i];
-
-    a = a & b;
-    return a;
-}
-template<size_t A, size_t B>
-Bigint<(A > B ? A : B)> operator|=(const Bigint<A>& l, const Bigint<B>& r) {
-    constexpr size_t R = (A > B ? A : B);
-    Bigint<R> a;
-    Bigint<R> b;
-    for (size_t i = 0; i < A; ++i) a.bits[i] = l.bits[i];
-    for (size_t i = 0; i < B; ++i) b.bits[i] = r.bits[i];
-
-    a = a | b;
-    return a;
-}
-template<size_t A, size_t B>
-Bigint<(A > B ? A : B)> operator^=(const Bigint<A>& l, const Bigint<B>& r) {
-    constexpr size_t R = (A > B ? A : B);
-    Bigint<R> a;
-    Bigint<R> b;
-    for (size_t i = 0; i < A; ++i) a.bits[i] = l.bits[i];
-    for (size_t i = 0; i < B; ++i) b.bits[i] = r.bits[i];
-
-    a = a ^ b;
-    return a;
 }
 
 #endif
