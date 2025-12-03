@@ -605,41 +605,5 @@ Bigint<(A > B ? A : B)> operator^=(const Bigint<A>& l, const Bigint<B>& r) {
 }
 
 int main(){
-    std::string s;
-    std::cin>>s;
-    Bigint<256>a(s);
-    std::string op;
-    std::cin>>op;
-    std::cin>>s;
-    Bigint<128>b(s);
-
-    if(op=="+"){
-        std::cout<<(a+b).num()<<std::endl;
-    }else if(op=="-"){
-        std::cout<<(a-b).num()<<std::endl;
-    }else if(op=="*"){
-        std::cout<<(a*b).num()<<std::endl;
-    }else if(op=="/"){
-        std::cout<<(a/b).num()<<std::endl;
-    }else if(op=="<"){
-        std::cout<<(a<b?"true":"false")<<std::endl;
-    }else if(op==">"){
-        std::cout<<(a>b?"true":"false")<<std::endl;
-    }else if(op=="<="){
-        std::cout<<(a<=b?"true":"false")<<std::endl;
-    }else if(op==">="){
-        std::cout<<(a>=b?"true":"false")<<std::endl;
-    }else if(op=="=="){
-        std::cout<<(a==b?"true":"false")<<std::endl;
-    }else if(op=="%"){
-        std::cout<<(a%b).num()<<std::endl;
-    }else if(op=="&"){
-        std::cout<<(a&b).num()<<std::endl;
-    }else if(op=="|"){
-        std::cout<<(a|b).num()<<std::endl;
-    }else if(op=="^"){
-        std::cout<<(a^b).num()<<std::endl;
-    }
-
     return 0;
 }
