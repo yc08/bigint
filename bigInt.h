@@ -9,6 +9,7 @@ template<size_t N>
 struct Bigint{
     std::bitset<N> bits;
 
+    // Constructors
     Bigint(){
         bits.reset();
     }
@@ -36,6 +37,7 @@ struct Bigint{
         }
     }
 
+    // Helper Functions
     bool isNegative() const {
         return bits[N-1];
     }
@@ -43,7 +45,17 @@ struct Bigint{
     size_t size(){
         return N;
     }
-
+    
+    Bigint abs() const {
+        if (!bits[N-1]) return *this;
+        Bigint inv = ~(*this);
+        Bigint one;
+        one.bits[0] = 1;
+        return inv + one; 
+    }
+    
+    // Operator ~ = == > < >= <= << >> & | ^ ++ -- + - * / %
+    // bit, long long, int versions where applicable
     Bigint operator ~ () const {
         Bigint result;
         result.bits = ~bits;
@@ -172,16 +184,97 @@ struct Bigint{
         return result;
     }
 
+    Bigint& operator &=(const Bigint &other)  {
+        *this = *this & other;
+        return *this;
+    }
+
+    Bigint operator &(const long long &other) const {
+        Bigint otherBigint(other);
+        return *this & otherBigint;
+    }
+
+    Bigint& operator &=( const long long &other) {
+        Bigint otherBigint(other);
+        *this = *this & otherBigint;
+        return *this;
+    }
+
+    Bigint operator &(const int &other) const {
+        Bigint otherBigint(other);
+        return *this & otherBigint;
+    }
+
+    Bigint& operator &=( const int &other) {
+        Bigint otherBigint(other);
+        *this = *this & otherBigint;
+        return *this;
+    }
+
     Bigint operator|(const Bigint &other) const {
         Bigint result;
         result.bits = bits | other.bits;
         return result;
     }
 
+    Bigint& operator |=(const Bigint &other)  {
+        *this = *this | other;
+        return *this;
+    }
+
+    Bigint operator|(const long long &other) const {
+        Bigint otherBigint(other);
+        return *this | otherBigint;
+    }
+
+    Bigint& operator |=( const long long &other) {
+        Bigint otherBigint(other);
+        *this = *this | otherBigint;
+        return *this;
+    }
+
+    Bigint operator|(const int &other) const {
+        Bigint otherBigint(other);
+        return *this | otherBigint;
+    }
+
+    Bigint& operator |=( const int &other) {
+        Bigint otherBigint(other);
+        *this = *this | otherBigint;
+        return *this;
+    }
+
     Bigint operator^(const Bigint &other) const {
         Bigint result;
         result.bits = bits ^ other.bits;
         return result;
+    }
+
+    Bigint& operator ^=(const Bigint &other)  {
+        *this = *this ^ other;
+        return *this;
+    }
+
+    Bigint operator^(const long long &other) const {
+        Bigint otherBigint(other);
+        return *this ^ otherBigint;
+    }
+
+    Bigint& operator ^=( const long long &other) {
+        Bigint otherBigint(other);
+        *this = *this ^ otherBigint;
+        return *this;
+    }
+
+    Bigint operator^(const int &other) const {
+        Bigint otherBigint(other);
+        return *this ^ otherBigint;
+    }
+
+    Bigint& operator ^=( const int &other) {
+        Bigint otherBigint(other);
+        *this = *this ^ otherBigint;
+        return *this;
     }
     
     Bigint& operator++() {
@@ -229,8 +322,7 @@ struct Bigint{
     }
 
     Bigint& operator+=( const long long &other) {
-        Bigint otherBigint(other);
-        *this = *this + otherBigint;
+        *this = *this - other;
         return *this;
     }
 
@@ -240,8 +332,7 @@ struct Bigint{
     }
 
     Bigint& operator+=( const int &other) {
-        Bigint otherBigint(other);
-        *this = *this + otherBigint;
+        *this = *this + other;
         return *this;
     }
 
@@ -250,9 +341,9 @@ struct Bigint{
         return *this + other + 1;
     }
 
-    Bigint& operator-=(const Bigint &other) const {
-        Bigint negOther = ~Bigint(other);
-        return *this + negOther + 1;
+    Bigint& operator-=(const Bigint &other) {
+        *this = *this - other;
+        return *this;
     }
 
     Bigint operator-( long long other) const {
@@ -260,9 +351,9 @@ struct Bigint{
         return *this + negOther + 1;
     }
 
-    Bigint& operator-=(const long long &other) const {
-        Bigint negOther = ~Bigint(other);
-        return *this + negOther + 1;
+    Bigint& operator-=(const long long &other) {
+        *this = *this - other;
+        return *this;
     }
 
     Bigint operator-( int other) const {
@@ -270,9 +361,9 @@ struct Bigint{
         return *this + negOther + 1;
     }
 
-    Bigint& operator-=(const int &other) const {
-        Bigint negOther = ~Bigint(other);
-        return *this + negOther + 1;
+    Bigint& operator-=(const int &other)  {
+        *this = *this - other;
+        return *this;
     }
 
     Bigint operator*(const Bigint &other) const {
@@ -311,7 +402,7 @@ struct Bigint{
 
     Bigint& operator*=( const int &other) {
         Bigint otherBigint(other);
-        *this = *this * otherBigint;
+        *this = *this * other;
         return *this;
     }
 
@@ -396,19 +487,12 @@ struct Bigint{
         return *this;
     }
 
+    // output functions
     void printbit() const {
         for (int i = N - 1; i >= 0; --i) {
             std::cout << bits[i];
         }
         std::cout << std::endl;
-    }
-
-    Bigint abs() const {
-        if (!bits[N-1]) return *this;
-        Bigint inv = ~(*this);
-        Bigint one;
-        one.bits[0] = 1;
-        return inv + one; 
     }
 
     std::string num() const {
@@ -443,6 +527,7 @@ struct Bigint{
 
 };
 
+// Mixed size operators
 template<size_t A, size_t B>
 Bigint<(A > B ? A : B)> operator+(const Bigint<A>& l, const Bigint<B>& r) {
     constexpr size_t R = (A > B ? A : B);

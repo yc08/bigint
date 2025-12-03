@@ -3,7 +3,7 @@
 using namespace std;
 int main(){
     Bigint<1024> a("290000000000000000000000000");
-    Bigint<512> b(15);
+    Bigint<1024> b(15);
 
     Bigint<1024> c = a + b;
     Bigint<1024> d = c - 10;
@@ -13,6 +13,10 @@ int main(){
     Bigint<1024> h = a % b;
     Bigint<1024> i = a & b;
     Bigint<1024> j = a | b;
+    Bigint<1024> k = a;
+    k += b;
+    k &= b*b;
+
 
     std::cout << "a: " << a.num() << "\n";
     std::cout << "b: " << b.num() << "\n";
@@ -24,6 +28,7 @@ int main(){
     std::cout << "a % b: " << h.num() << "\n";
     std::cout << "a & b: " << i.num() << "\n";
     std::cout << "a | b: " << j.num() << "\n";
+    std::cout << "k (a += b): " << k.num() << "\n";
 
     return 0;
 }
