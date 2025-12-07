@@ -70,10 +70,26 @@ bigint calculator(std::vector<std::string>&arr){
     return nums[0];
 }
 
+void formatInput(std::string &input){
+    std::string formatted;
+    for(char c:input){
+        if(c=='+'||c=='-'||c=='*'||c=='/'||c=='%'||c=='('||c==')'){
+            formatted+=' ';
+            formatted+=c;
+            formatted+=' ';
+        }
+        else{
+            formatted+=c;
+        }
+    }
+    input=formatted;
+}
+
 int main(){
     std::vector<std::string>arr;
     std::string line;
     getline(std::cin,line);
+    formatInput(line);
     std::stringstream ss(line);
     std::string token;
     while(ss>>token){
