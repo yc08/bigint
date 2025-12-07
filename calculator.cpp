@@ -39,7 +39,7 @@ bigint calculator(std::vector<std::string>&arr){
     size_t n=arr.size();
     std::vector<int>ops(n,0);
     std::vector<bigint>nums(n);
-    std::vector<char>precedence={'*','/','%','+','-','E'};
+    std::vector<char>precedence={'*','/','%','+','-','(',')','E'};
     int numCount=-1,opCount=-1;
     for(const auto &token:arr){
         int op=-1;
@@ -52,25 +52,32 @@ bigint calculator(std::vector<std::string>&arr){
         if(op!=-1){
             if(ops[opCount]<op){
                 while(opCount >= 0 && ops[opCount] <= op){
+                    if(op==5) break;
+                    if(op==6 && ops[opCount]==5) {
+                        ops[opCount--]=0;
+                        break;
+                    }
                     char oper=ops[opCount--];
+                    ops[opCount+1]=0;
                     bigint b=nums[numCount--];
+                    nums[numCount+1]=0;
                     bigint a=nums[numCount];
-                    bigint res;
                     nums[numCount]=cal(a,b,oper);
                 }
             }
-            ops[++opCount]=op;
+            if(op!=6)ops[++opCount]=op;
         }
         else{
             nums[++numCount]=bigint(token);
         }
         // printbig(nums);
         // printVec(ops);
+        // std::cout<<std::endl;
     }
     return nums[0];
 }
 
-void formatInput(std::string &input){
+void formatInput(std::string &input, std::vector<std::string>&arr){
     std::string formatted;
     for(char c:input){
         if(c=='+'||c=='-'||c=='*'||c=='/'||c=='%'||c=='('||c==')'){
@@ -82,21 +89,25 @@ void formatInput(std::string &input){
             formatted+=c;
         }
     }
-    input=formatted;
-}
-
-int main(){
-    std::vector<std::string>arr;
-    std::string line;
-    getline(std::cin,line);
-    formatInput(line);
-    std::stringstream ss(line);
+    formatted+='E';
+    std::stringstream ss(formatted);
     std::string token;
+    
     while(ss>>token){
         if(token.empty()) continue;
         arr.push_back(token);
     }
-    arr.push_back("E");
+}
+
+int main(){
+
+    std::vector<std::string>arr;
+
+    std::string line;
+    getline(std::cin,line);
+    formatInput(line,arr);
+
     std::cout<<calculator(arr).num()<<"\n";
+
     return 0;
 }
