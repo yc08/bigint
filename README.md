@@ -1,71 +1,70 @@
-# bigint
+# Bigint Calculator
 
-Provides a `Bigint<N>` template (N = bit width) and arithmetic / comparison operators. Portable C++ (no compiler 128-bit extensions required).
+A portable C++ big integer library and calculator supporting arithmetic and bitwise operations on arbitrarily large signed integers.  
+Implements a template `Bigint<N>` (where `N` is the bit width) and a command-line calculator for interactive use.
 
 ## Features
-- Template: `Bigint<N>` where `N` is bit width (e.g. 128, 256).
-- Signed two's‑complement representation.
-- Arithmetic: `+`, `-`, `*`, `/`.
-- Mixed-size operators: expressions like `Bigint<256> + Bigint<128>` promote operands to `Bigint<max(A,B)>`.
-- Bit shifts `<<`, `>>`, increments/decrements.
-- Comparison operators `<, <=, >, >=, ==`.
-- Decimal I/O: parse decimal strings in constructor and `num()` to obtain full decimal output (portable, no `__int128`).
-- Uses only standard headers (`<bitset>`, `<string>`, `<iostream>`, etc.).
+
+- **Bigint Template:** `Bigint<N>` for signed integers of any bit width (e.g. 128, 256, 512).
+- **Arithmetic:** Addition, subtraction, multiplication, division, modulo.
+- **Bitwise:** AND, OR, XOR, NOT, bit shifts.
+- **Mixed-size:** Operators promote operands to the larger bit width.
+- **Decimal I/O:** Parse decimal strings and print results as decimal.
+- **Calculator:** Interactive command-line calculator supporting expressions with `+`, `-`, `*`, `/`, `%`, `&`, `|`, `^`, parentheses.
+- **No external dependencies:** Uses only standard C++ headers.
 
 ## Build
 
-Open a terminal in the project folder (`C:\Users\User\Desktop\bigint`) and run:
+Open a terminal in the project folder and compile:
 
-- g++ (recommended)
+**g++ (recommended):**
 ```bash
-g++ -std=c++17 -O2 -Wall -Wextra -o bigint bigInt.cpp
+g++ calculator.cpp -o calculator
 ```
 
-- MSVC (Developer Command Prompt)
+**MSVC (Developer Command Prompt):**
 ```bat
-cl /EHsc /std:c++17 /W4 bigInt.cpp
+cl /EHsc /std:c++17 /W4 calculator.cpp
 ```
 
-Run:
+## Usage
+
+Run the calculator:
+
 ```powershell
-.\bigint    # Windows
+.\calculator
 ```
 
-## Usage (program)
-The provided `main()` reads:
-1. a decimal number (string)
-2. an operator character (`+`, `-`, `*`, `/`)
-3. a second decimal number
-
-Example interactive run:
+Enter an expression (all on one line), e.g.:
 ```
-> 123456789123456789
-> +
-> 987654321098765432
-# prints the decimal result
+123456789123456789 + 987654321098765432
+```
+or
+```
+(123456789123456789 * 2) ^ 42
+```
+The result will be printed in decimal.
+
+## Example
+
+```
+> 1000000000000000000000000000000 * 123456789
+123456789000000000000000000000000
+------------
 ```
 
-The program constructs `Bigint<256>` for the first operand and `Bigint<128>` for the second, then performs the requested operation and prints the decimal result via `.num()`.
+## API Reference
 
-## API quick reference
+- **Constructors:**
+  - `Bigint<256> a(42);`
+  - `Bigint<128> b("12345678901234567890");`
+- **Operators:** `+`, `-`, `*`, `/`, `%`, `&`, `|`, `^`, `<<`, `>>`, comparisons.
+- **Decimal output:** `std::cout << a.num() << '\n';`
+- **Bitwise:** `a & b`, `a | b`, `a ^ b`, `~a`
+- **Mixed-size:** `Bigint<256> + Bigint<128>` returns `Bigint<256>`
 
-- Construct:
-  - `Bigint<128> a(42);`
-  - `Bigint<256> b("12345678901234567890");`
-- Mixed-size add:
-  - `auto c = a + b; // returns Bigint<max(A,B)>`
-- Decimal output:
-  - `std::cout << c.num() << '\n';`
-- Other operators behave as usual (`-`, `*`, `/`, comparisons, shifts).
+## Limitations
 
-## Notes & Limitations
-- Decimal parsing/printing is implemented portably without `__int128`. Very large decimal strings may throw `std::out_of_range`.
-- Overflow beyond the template bit width wraps/truncates in current arithmetic implementation; when mixing sizes the result has width `max(A,B)`.
-- The implementation is intended as a learning/simple big-int; for production use consider GMP, Boost.Multiprecision, or similar libraries.
-
-## Contributing / Extending
-- Add better overflow handling (return wider type or error).
-- Implement additional I/O (istream), bitwise ops, and optimizations.
-- Add unit tests.
-
-License: MIT (or choose your preferred license)
+- Overflow wraps/truncates at the template bit width.
+- Decimal parsing/printing is portable, but very large numbers may be slow.
+- For production use, consider GMP or Boost.Multiprecision.
