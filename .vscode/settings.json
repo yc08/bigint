@@ -3,6 +3,7 @@
         "xstring": "cpp",
         "bitset": "cpp",
         "ostream": "cpp",
+        "vector": "cpp"
         "algorithm": "cpp",
         "atomic": "cpp",
         "bit": "cpp",

@@ -1,35 +1,70 @@
-# BigInt Library
+# Bigint Calculator
 
-## Overview
-The BigInt library provides a way to handle large integers in C++. It supports various operations such as addition, subtraction, multiplication, and division on integers larger than those typically supported by standard data types.
+A portable C++ big integer library and calculator supporting arithmetic and bitwise operations on arbitrarily large signed integers.  
+Implements a template `Bigint<N>` (where `N` is the bit width) and a command-line calculator for interactive use.
 
 ## Features
-- **Arbitrary Precision**: Handle integers of any size limited only by memory.
-- **Performance**: Optimized for speed and efficiency.
-- **Easy to Use**: Simple interface for common operations.
 
-## Installation
-To use the BigInt library, include the header file in your project:
-```cpp
-#include "bigInt.h"
+- **Bigint Template:** `Bigint<N>` for signed integers of any bit width (e.g. 128, 256, 512).
+- **Arithmetic:** Addition, subtraction, multiplication, division, modulo.
+- **Bitwise:** AND, OR, XOR, NOT, bit shifts.
+- **Mixed-size:** Operators promote operands to the larger bit width.
+- **Decimal I/O:** Parse decimal strings and print results as decimal.
+- **Calculator:** Interactive command-line calculator supporting expressions with `+`, `-`, `*`, `/`, `%`, `&`, `|`, `^`, parentheses.
+- **No external dependencies:** Uses only standard C++ headers.
+
+## Build
+
+Open a terminal in the project folder and compile:
+
+**g++ (recommended):**
+```bash
+g++ calculator.cpp -o calculator
+```
+
+**MSVC (Developer Command Prompt):**
+```bat
+cl /EHsc /std:c++17 /W4 calculator.cpp
 ```
 
 ## Usage
-Here is a simple example of how to use the BigInt library:
-```cpp
-#include "bigInt.h"
 
-int main() {
-    BigInt<100> a = "123456789012345678901234567890";
-    BigInt<100> b = "987654321098765432109876543210";
-    BigInt<100> c = a + b;
-    std::cout << c << std::endl;
-    return 0;
-}
+Run the calculator:
+
+```powershell
+.\calculator
 ```
 
-## Contributing
-Contributions are welcome! Please submit a pull request or open an issue for any suggestions or improvements.
+Enter an expression (all on one line), e.g.:
+```
+123456789123456789 + 987654321098765432
+```
+or
+```
+(123456789123456789 * 2) ^ 42
+```
+The result will be printed in decimal.
 
-## License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## Example
+
+```
+> 1000000000000000000000000000000 * 123456789
+123456789000000000000000000000000
+------------
+```
+
+## API Reference
+
+- **Constructors:**
+  - `Bigint<256> a(42);`
+  - `Bigint<128> b("12345678901234567890");`
+- **Operators:** `+`, `-`, `*`, `/`, `%`, `&`, `|`, `^`, `<<`, `>>`, comparisons.
+- **Decimal output:** `std::cout << a.num() << '\n';`
+- **Bitwise:** `a & b`, `a | b`, `a ^ b`, `~a`
+- **Mixed-size:** `Bigint<256> + Bigint<128>` returns `Bigint<256>`
+
+## Limitations
+
+- Overflow wraps/truncates at the template bit width.
+- Decimal parsing/printing is portable, but very large numbers may be slow.
+- For production use, consider GMP or Boost.Multiprecision.
